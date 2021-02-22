@@ -1,0 +1,19 @@
+# Set Master Image
+FROM php:7.4-fpm
+
+RUN apt-get update && apt-get install -y vim curl
+RUN docker-php-ext-install pdo pdo_mysql
+RUN docker-php-ext-enable opcache pdo_mysql
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Clean Cache
+RUN apt-get clean
+
+# Expose port 9000 and start php-fpm server
+EXPOSE 9000
+CMD ["php-fpm"]
+
+# Goto Project Dir
+WORKDIR /var/www/html

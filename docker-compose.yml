@@ -1,0 +1,42 @@
+version: "3.7"
+services:
+  nginx:
+    environment:
+      - Project=Blog
+    build:
+      context: .
+      dockerfile: nginx_dockerfile
+    container_name: nginx
+    networks:
+      - net
+    ports:
+      - 9000:80
+      - 9001:443
+    volumes:
+      # - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./${Project}:/usr/share/nginx/html/${Project}
+    command: >
+      /bin/sh -c
+      "envsubst '
+      $${Project}
+      '< /etc/nginx/conf.d/default.template
+      > /etc/nginx/conf.d/default.conf
+      && envsubst '
+      $${Project}
+      '< /etc/nginx/nginx.template
+      > /etc/nginx/nginx.conf
+      && nginx -g 'daemon off;'"
+  php74:
+    build:
+      context: .
+      dockerfile: php_dockerfile
+    container_name: php74
+    networks:
+      - net
+    volumes:
+      - ./${Project}:/var/www/html
+networks:
+  net:
+    external: true
+
