@@ -1,7 +1,19 @@
 # Set Master Image
 FROM php:7.4-fpm
 
-RUN apt-get update && apt-get install -y vim curl
+ARG Project
+ARG Project_URL
+ARG MYSQL_DB
+ARG MYSQL_USER
+ARG MYSQL_PASSWORD
+
+ENV Project=${Project}
+ENV Project_URL=${Project_URL}
+ENV MYSQL_DB=${MYSQL_DB}
+ENV MYSQL_USER=${MYSQL_USER}
+ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
+
+RUN apt-get update && apt-get install -y vim curl gettext
 RUN docker-php-ext-install pdo pdo_mysql
 RUN docker-php-ext-enable opcache pdo_mysql
 
@@ -11,9 +23,22 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Clean Cache
 RUN apt-get clean
 
+COPY /${Project} /var/www/html
+# Composer update
+WORKDIR /var/www/html
+CMD ["composer","update"]
+
+# Chown 777
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Set Env
+COPY env.template env.template
+RUN envsubst < env.template > .env
+
+RUN php artisan key:generate
+RUN php artisan cache:clear
+
+
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
 CMD ["php-fpm"]
-
-# Goto Project Dir
-WORKDIR /var/www/html
